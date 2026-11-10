@@ -1,0 +1,59 @@
+# Sungrow energy flow: the power of a house with solar panels and a battery on one tile, and a card with the production
+# and consumption per day. No code and no words here: every name, label and hint is a key into
+# translations/<language>.json, part "app". The fields are explained in the plugins repository's docs/MANIFEST.md.
+id: sungrow_flow
+version: 0.1.0
+api: "0.15"
+icon: solar-power
+maintainer: pasimatics
+license: MIT
+stage: beta
+topics: [energy]
+requires:
+  esphome: 2026.6.2
+boards: any
+flash_kb: 28
+
+permissions:
+  # The card asks Home Assistant for the daily change of the energy counters (its long-term statistics).
+  ha_commands: ["recorder/statistics_during_period"]
+attributes: [ai-developed]
+
+# The lifetime energy counters the card reads its days from. Built into the screen: another counter is a new build.
+inputs:
+  - { id: total_pv, kind: entity, domains: [sensor], scope: screen, label: input_total_pv, hint: input_total_hint }
+  - { id: total_import, kind: entity, domains: [sensor], scope: screen, label: input_total_import, hint: input_total_hint }
+  - { id: total_export, kind: entity, domains: [sensor], scope: screen, label: input_total_export, hint: input_total_hint }
+  - { id: total_charge, kind: entity, domains: [sensor], scope: screen, label: input_total_charge, hint: input_battery_hint }
+  - { id: total_discharge, kind: entity, domains: [sensor], scope: screen, label: input_total_discharge, hint: input_battery_hint }
+
+tiles:
+  - id: flow
+    name: tile_name
+    icon: solar-power
+    sizes: { min: 2x2, max: 4x4, full: true }
+    memory: 4800
+    example: tile_example
+    options:
+      - { id: solar, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_solar, hint: opt_power_hint }
+      - { id: grid, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_grid, hint: opt_grid_hint }
+      - { id: battery, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_battery, hint: opt_battery_hint }
+      - { id: soc, kind: entity, domains: [sensor], label: opt_soc }
+      - { id: house, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_house, hint: opt_house_hint }
+      - { id: string1, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_string1, hint: opt_string_hint }
+      - { id: string2, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_string2 }
+      - { id: string3, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_string3 }
+      - { id: string4, kind: entity, domains: [sensor], attributes: [unit_of_measurement], label: opt_string4 }
+      - { id: battery_temp, kind: entity, domains: [sensor], label: opt_battery_temp }
+      - { id: invert_grid, kind: toggle, default: false, label: opt_invert_grid, hint: opt_invert_grid_hint }
+      - { id: invert_battery, kind: toggle, default: false, label: opt_invert_battery, hint: opt_invert_battery_hint }
+
+cards:
+  - { id: history, name: card_name, wide: true }
+
+# One counter per question: its daily changes as one list of numbers, and the start of each day (milliseconds).
+answers:
+  - command: recorder/statistics_during_period
+    fields:
+      change: { path: "[*][*].change", as: numbers }
+      start: { path: "[*][*].start", as: numbers }

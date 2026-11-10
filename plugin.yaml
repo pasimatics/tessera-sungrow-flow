@@ -1,0 +1,16 @@
+# What a screen gets when it takes this plugin. Tessera includes this file from the screen's <name>.plugins.yaml with the
+# inputs filled in (the energy counters chosen when the plugin was added), and adds the components folder beside it.
+# The defaults are the entity names of the mkaiser Sungrow Modbus integration.
+defaults:
+  TOTAL_PV: sensor.total_pv_generation
+  TOTAL_IMPORT: sensor.total_imported_energy
+  TOTAL_EXPORT: sensor.total_exported_energy
+  TOTAL_CHARGE: sensor.total_battery_charge
+  TOTAL_DISCHARGE: sensor.total_battery_discharge
+
+sungrow_flow:
+  total_pv: ${TOTAL_PV}
+  total_import: ${TOTAL_IMPORT}
+  total_export: ${TOTAL_EXPORT}
+  total_charge: ${TOTAL_CHARGE}
+  total_discharge: ${TOTAL_DISCHARGE}

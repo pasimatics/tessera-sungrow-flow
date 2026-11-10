@@ -1,0 +1,79 @@
+# What the bench (the plugins repository's tools/preview.py) shows: the tile with a house in the afternoon and one in
+# the evening, and the card with thirty days. Never put a secret here.
+tiles:
+  - tile: flow
+    name: Sunny afternoon
+    options:
+      solar: sensor.total_dc_power
+      grid: sensor.meter_active_power
+      battery: sensor.battery_power
+      soc: sensor.battery_level
+      house: sensor.load_power
+      string1: sensor.mppt1_power
+      string2: sensor.mppt2_power
+      battery_temp: sensor.battery_temperature
+      invert_battery: true
+  - tile: flow
+    name: Evening on the grid
+    options:
+      solar: sensor.evening_dc_power
+      grid: sensor.evening_meter_power
+      battery: sensor.evening_battery_power
+      soc: sensor.evening_battery_level
+      battery_temp: sensor.battery_temperature
+  - tile: flow
+    name: No sensors yet
+    sizes: [2x2]
+
+states:
+  sensor.total_dc_power: { state: "5240", attributes: { unit_of_measurement: W } }
+  sensor.meter_active_power: { state: "-1180", attributes: { unit_of_measurement: W } }
+  sensor.battery_power: { state: "1520", attributes: { unit_of_measurement: W } }
+  sensor.battery_level: { state: "64", attributes: { unit_of_measurement: "%" } }
+  sensor.load_power: { state: "2.54", attributes: { unit_of_measurement: kW } }
+  sensor.mppt1_power: { state: "2810", attributes: { unit_of_measurement: W } }
+  sensor.mppt2_power: { state: "2430", attributes: { unit_of_measurement: W } }
+  sensor.battery_temperature: { state: "18.0", attributes: { unit_of_measurement: "°C" } }
+  sensor.evening_dc_power: { state: "0", attributes: { unit_of_measurement: W } }
+  sensor.evening_meter_power: { state: "2120", attributes: { unit_of_measurement: W } }
+  sensor.evening_battery_power: { state: "0", attributes: { unit_of_measurement: W } }
+  sensor.evening_battery_level: { state: "3", attributes: { unit_of_measurement: "%" } }
+
+# The bench gives every question of the command this one answer, so all five counters show the same days here.
+commands:
+  "recorder/statistics_during_period":
+    sensor.total_pv_generation: [
+      { start: 1791759600000, change: 18.7 },
+      { start: 1791846000000, change: 6.5 },
+      { start: 1791932400000, change: 24.3 },
+      { start: 1792018800000, change: 3.1 },
+      { start: 1792105200000, change: 4.2 },
+      { start: 1792191600000, change: 36.2 },
+      { start: 1792278000000, change: 4.2 },
+      { start: 1792364400000, change: 18.7 },
+      { start: 1792450800000, change: 3.1 },
+      { start: 1792537200000, change: 36.2 },
+      { start: 1792623600000, change: 9.8 },
+      { start: 1792710000000, change: 3.1 },
+      { start: 1792796400000, change: 4.2 },
+      { start: 1792882800000, change: 24.3 },
+      { start: 1792969200000, change: 24.3 },
+      { start: 1793055600000, change: 4.2 },
+      { start: 1793142000000, change: 9.8 },
+      { start: 1793228400000, change: 4.2 },
+      { start: 1793314800000, change: 36.2 },
+      { start: 1793401200000, change: 24.3 },
+      { start: 1793487600000, change: 3.1 },
+      { start: 1793574000000, change: 4.2 },
+      { start: 1793660400000, change: 9.8 },
+      { start: 1793746800000, change: 3.1 },
+      { start: 1793833200000, change: 24.3 },
+      { start: 1793919600000, change: 3.1 },
+      { start: 1794006000000, change: 9.8 },
+      { start: 1794092400000, change: 3.1 },
+      { start: 1794178800000, change: 36.2 },
+      { start: 1794265200000, change: 6.5 }
+    ]
+
+cards:
+  - { card: history }
