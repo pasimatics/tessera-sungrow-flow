@@ -20,8 +20,8 @@ It works with any inverter whose sensors Home Assistant has; the defaults are th
 1. In Tessera, open **Plugins**, choose **Add with a link** and paste this repository's link.
 2. Add the plugin to a screen. Under **When building**, check the five energy counters (they are filled in with the
    names of the mkaiser integration) and choose **Save and build**. The screen builds once.
-3. In **Layout**, place the **Energy flow** tile from the library's Plugins group. It takes at least 2 x 2 cells; the
-   whole page gives it the most room.
+3. In **Layout**, place the **Energy flow** tile from the library's Plugins group. It starts in one cell: drag its
+   right edge, then its bottom edge, until it covers 2 x 2 cells or more. Below that it shows the four values as a list.
 4. In the inspector, choose the sensors: solar power, grid power, battery power and battery charge. House power, the
    strings and the battery temperature are optional.
 5. Check the directions. The tile expects a grid sensor that is positive while the house imports, and a battery sensor

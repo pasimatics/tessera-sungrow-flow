@@ -22,8 +22,9 @@ der [mkaiser-Sungrow-Modbus-Integration](https://github.com/mkaiser/Sungrow-SHx-
 1. In Tessera **Plugins** öffnen, **Add with a link** wählen und den Link dieses Repositorys einfügen.
 2. Das Plugin einem Screen hinzufügen. Unter **When building** die fünf Energiezähler prüfen (vorbelegt mit den Namen
    der mkaiser-Integration) und **Save and build** wählen. Der Screen wird einmal gebaut.
-3. Unter **Layout** die Kachel **Energiefluss** aus der Gruppe Plugins platzieren. Sie braucht mindestens 2 x 2 Zellen;
-   auf der ganzen Seite hat sie am meisten Platz.
+3. Unter **Layout** die Kachel **Energiefluss** aus der Gruppe Plugins platzieren. Sie startet in einer Zelle: erst den
+   rechten Rand, dann den unteren Rand ziehen, bis sie 2 x 2 Zellen oder mehr belegt. Kleiner zeigt sie die vier Werte
+   als Liste.
 4. Im Inspektor die Sensoren wählen: Solarleistung, Netzleistung, Batterieleistung und Batterieladestand.
    Hausverbrauch, Strings und Batterietemperatur sind optional.
 5. Die Richtungen prüfen. Die Kachel erwartet einen Netzsensor, der bei Bezug positiv ist, und einen Batteriesensor,

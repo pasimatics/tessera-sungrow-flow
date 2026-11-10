@@ -97,6 +97,13 @@ class FlowTile : public tessera::Tile {
     static const char *const STRINGS[4] = {"string1", "string2", "string3", "string4"};
     for (int i = 0; i < 4; ++i) has_string_[i] = strlen(c.options[STRINGS[i]] | "") > 0;
 
+    // Below 2 x 2 cells the diagram has no room: the four values as a list instead.
+    compact_ = c.columns < 2 || c.rows < 2;
+    if (compact_) {
+      create_compact(c.parent);
+      return;
+    }
+
     border_ = std::max(2, ui::px(4));
     dot_ = std::max(4, ui::px(7));
     diameter_ = std::max(ui::px(40), std::min(height_ * 30 / 100, width_ * 22 / 100));
@@ -235,7 +242,7 @@ class FlowTile : public tessera::Tile {
 
   void on_tick(uint32_t) override {
     paint();
-    if (!any_) return;
+    if (!any_ || compact_) return;
     // The dots step along their line once a second, further the more power flows.
     const float flow[NODES] = {std::max(0.0f, or_zero(solar_)), or_zero(grid_), or_zero(house_), or_zero(battery_)};
     const bool to_hub[NODES] = {true, flow[GRID] >= 0, false, flow[BATTERY] >= 0};
@@ -260,6 +267,12 @@ class FlowTile : public tessera::Tile {
   }
 
   void on_theme() override {
+    if (compact_) {
+      ui::set_color(note_, theme::MUTED);
+      for (lv_obj_t *value : list_value_) ui::set_color(value, theme::INK);
+      paint();
+      return;
+    }
     for (int n = 0; n < NODES; ++n) {
       ui::set_color(node_[n].icon, theme::INK_SOFT);
       ui::set_color(node_[n].value, theme::INK);
@@ -307,7 +320,83 @@ class FlowTile : public tessera::Tile {
     lv_obj_set_style_border_color(node_[n].ring, ui::tone_color(tone, role), 0);
   }
 
+  // The list of a tile smaller than 2 x 2: an icon in its energy colour and the value, in one or two columns, in the
+  // largest font that holds all four.
+  void create_compact(lv_obj_t *parent) {
+    note_ = line_label(parent, Font::BODY_LARGE, theme::MUTED, 0, (height_ - ui::line_height(Font::BODY_LARGE)) / 2,
+                       width_, LV_TEXT_ALIGN_CENTER);
+    const int gap = ui::px(8), row_gap = ui::px(4), icon_w = ui::line_height(Font::ICON_SMALL), beside = ui::px(6);
+    Font face = Font::BODY;
+    int columns = 1;
+    bool found = false;
+    for (Font f : {Font::TITLE, Font::BODY_LARGE, Font::BODY}) {
+      const int line = std::max(ui::line_height(f), icon_w), entry = icon_w + beside + ui::text_width("8,88 kW", f);
+      for (int cols : {2, 1}) {
+        const int lines = (NODES + cols - 1) / cols;
+        if (cols * entry + (cols - 1) * gap <= width_ && lines * line + (lines - 1) * row_gap <= height_) {
+          face = f;
+          columns = cols;
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    const int line = std::max(ui::line_height(face), icon_w);
+    const int lines = std::min((NODES + columns - 1) / columns, std::max(1, (height_ + row_gap) / (line + row_gap)));
+    const int column_w = (width_ - (columns - 1) * gap) / columns;
+    const int top = std::max(0, (height_ - lines * line - (lines - 1) * row_gap) / 2);
+    static const uint32_t ICONS[NODES] = {ICON_SOLAR, ICON_GRID, ICON_HOME, ICON_BATTERY};
+    for (int n = 0; n < NODES; ++n) {
+      const int row = n / columns, x = (n % columns) * (column_w + gap), y = top + row * (line + row_gap);
+      list_icon_[n] = line_label(parent, Font::ICON_SMALL, theme::INK_SOFT, x, y + (line - icon_w) / 2, icon_w,
+                                 LV_TEXT_ALIGN_CENTER);
+      ui::set_text(list_icon_[n], ui::icon(ICONS[n]));
+      list_value_[n] = line_label(parent, face, theme::INK, x + icon_w + beside, y + (line - ui::line_height(face)) / 2,
+                                  column_w - icon_w - beside, LV_TEXT_ALIGN_RIGHT);
+      list_fits_[n] = row < lines;
+    }
+  }
+
+  void paint_compact() {
+    hide(note_, any_);
+    for (int n = 0; n < NODES; ++n) {
+      hide(list_icon_[n], !any_ || !list_fits_[n]);
+      hide(list_value_[n], !any_ || !list_fits_[n]);
+    }
+    if (!any_) {
+      ui::set_text(note_, plugin_->text("choose"));
+      return;
+    }
+    const bool exports = !std::isnan(grid_) && grid_ <= -FLOWS_FROM;
+    const bool has_soc = !std::isnan(soc_), low = has_soc && soc_ < 15.0f;
+    ui::set_text(list_value_[SOLAR], power_text(plugin_, std::isnan(solar_) ? NAN : std::max(0.0f, solar_)));
+    ui::set_text(list_value_[GRID], power_text(plugin_, grid_));
+    ui::set_text(list_value_[HOUSE], power_text(plugin_, house_));
+    ui::set_text(list_value_[BATTERY], has_soc ? percent_text(plugin_, soc_) : power_text(plugin_, battery_));
+    ui::set_tone(list_icon_[SOLAR], Tone::NORMAL, theme::ENERGY_SOLAR);
+    ui::set_tone(list_icon_[GRID], Tone::NORMAL, exports ? theme::ENERGY_RETURN : theme::ENERGY_GRID);
+    ui::set_tone(list_icon_[HOUSE], Tone::NORMAL, theme::MARK_BLUE);
+    ui::set_tone(list_icon_[BATTERY], low ? Tone::ALERT : Tone::NORMAL, theme::ENERGY_BATTERY_OUT);
+    ui::set_text(list_icon_[BATTERY], battery_icon(has_soc));
+  }
+
+  // The battery's icon, filled as far as it is charged.
+  std::string battery_icon(bool has_soc) const {
+    uint32_t glyph = ICON_BATTERY;
+    if (has_soc && soc_ < 95.0f) {
+      const int tens = static_cast<int>(soc_ / 10.0f);
+      glyph = tens < 1 ? ICON_BATTERY_EMPTY : ICON_BATTERY_10 + static_cast<uint32_t>(tens - 1);
+    }
+    std::string icon = ui::icon(glyph);
+    return ui::covers(icon, Font::ICON_SMALL) ? icon : ui::icon(ICON_BATTERY);
+  }
+
   void paint() {
+    if (compact_) {
+      paint_compact();
+      return;
+    }
     hide(stage_, !any_);
     hide(note_, any_);
     if (!any_) {
@@ -335,14 +424,7 @@ class FlowTile : public tessera::Tile {
     const bool low = has_soc && soc_ < 15.0f;
     ring_colour(BATTERY, theme::MARK_GREEN, low ? Tone::ALERT : Tone::NORMAL);
     ui::set_tone(node_[BATTERY].icon, low ? Tone::ALERT : Tone::NORMAL, theme::INK_SOFT);
-    uint32_t glyph = ICON_BATTERY;
-    if (has_soc && soc_ < 95.0f) {
-      const int tens = static_cast<int>(soc_ / 10.0f);
-      glyph = tens < 1 ? ICON_BATTERY_EMPTY : ICON_BATTERY_10 + static_cast<uint32_t>(tens - 1);
-    }
-    std::string icon = ui::icon(glyph);
-    if (!ui::covers(icon, Font::ICON_SMALL)) icon = ui::icon(ICON_BATTERY);
-    ui::set_text(node_[BATTERY].icon, icon);
+    ui::set_text(node_[BATTERY].icon, battery_icon(has_soc));
     std::string doing;
     if (!std::isnan(battery_)) {
       const char *what = battery_ >= FLOWS_FROM ? "discharging" : battery_ <= -FLOWS_FROM ? "charging" : "idle";
@@ -379,7 +461,9 @@ class FlowTile : public tessera::Tile {
   SungrowFlow *plugin_;
   int width_ = 0, height_ = 0, tile_ = -1;
   int diameter_ = 0, hub_ = 0, border_ = 0, dot_ = 0, under_y_ = 0;
-  bool invert_grid_ = false, invert_battery_ = false, any_ = false, under_fits_ = false;
+  bool invert_grid_ = false, invert_battery_ = false, any_ = false, under_fits_ = false, compact_ = false;
+  lv_obj_t *list_icon_[4] = {}, *list_value_[4] = {};
+  bool list_fits_[4] = {};
   bool has_string_[4] = {};
   float solar_ = NAN, grid_ = NAN, battery_ = NAN, house_ = NAN, soc_ = NAN, temperature_ = NAN;
   float string_[4] = {NAN, NAN, NAN, NAN};
