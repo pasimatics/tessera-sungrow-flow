@@ -1,7 +1,7 @@
 # Sungrow Energiefluss
 
-> Beta: gegen die Header der Plugin-API geprüft, aber noch nicht auf einem Display gesehen. In den ersten Versionen sind
-> Korrekturen am Layout zu erwarten.
+> Beta: läuft auf einem 4-Zoll-Guition (ESP32-S3-4848S040) mit 2 x 2 Zellen. Andere Displays und Größen sind noch
+> nicht ausprobiert.
 
 Ein Plugin für [Tessera](https://github.com/MaxGramser/homeassistant_espscreen)-Touchdisplays: die Leistung eines Hauses
 mit Solaranlage und Batterie auf einer Kachel, im Stil der

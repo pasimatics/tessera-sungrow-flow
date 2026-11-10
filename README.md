@@ -1,6 +1,6 @@
 # Sungrow energy flow
 
-> Beta: checked against the plugin API's headers, but not yet seen on a screen. Expect layout fixes in the first versions.
+> Beta: runs on a 4-inch Guition (ESP32-S3-4848S040) at 2 x 2 cells. Other screens and sizes are not tried yet.
 
 A plugin for [Tessera](https://github.com/MaxGramser/homeassistant_espscreen) touch screens: the power of a house with
 solar panels and a battery on one tile, in the look of the
